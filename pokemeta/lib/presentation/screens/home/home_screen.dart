@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:pokemeta/models/card_model.dart';
 import 'package:pokemeta/models/tournament_model.dart';
 import 'package:pokemeta/presentation/screens/cards/card_detail_screen.dart';
+import 'package:pokemeta/presentation/screens/decks/active_deck_screen.dart';
 import 'package:pokemeta/presentation/screens/tournaments/tournament_detail_screen.dart';
+import 'package:pokemeta/providers/active_deck_provider.dart';
 import 'package:pokemeta/widgets/active_deck_banner.dart';
 import 'package:pokemeta/widgets/pokemon_card_tile.dart';
 import 'package:pokemeta/widgets/tournament_row_card.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +22,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // watch: Inicio se redibuja cuando cambia el mazo activo.
+    final activeDeck = context.watch<ActiveDeckProvider>();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -32,7 +38,17 @@ class _HomeScreenState extends State<HomeScreen> {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 24),
-        const ActiveDeckBanner(currentCount: 42, maxCount: 60),
+        ActiveDeckBanner(
+          currentCount: activeDeck.totalCards,
+          maxCount: ActiveDeckProvider.maxCards,
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => const ActiveDeckScreen(),
+              ),
+            );
+          },
+        ),
         const SizedBox(height: 16),
         SegmentedButton<int>(
           segments: const [

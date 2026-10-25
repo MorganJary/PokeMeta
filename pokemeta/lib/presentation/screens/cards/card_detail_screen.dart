@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pokemeta/models/card_model.dart';
+import 'package:pokemeta/providers/active_deck_provider.dart';
 import 'package:pokemeta/widgets/card_image.dart';
 import 'package:pokemeta/widgets/custom_stat_row.dart';
+import 'package:provider/provider.dart';
 
 /// Ahora es StatefulWidget porque guarda algo que cambia: si la carta
 /// está marcada como favorita.
@@ -30,6 +32,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
   Widget build(BuildContext context) {
     // En el State, los datos del widget se leen con "widget.".
     final card = widget.card;
+    // watch: la barra inferior se actualiza cuando cambia el mazo activo.
+    final activeDeck = context.watch<ActiveDeckProvider>();
+    final copies = activeDeck.copiesOf(card);
+    final canAdd = activeDeck.canAdd(card);
 
     return Scaffold(
       appBar: AppBar(
@@ -166,15 +172,20 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('En el mazo activo'),
-                Text('${card.copiesInActiveDeck} copias'),
+                Text('$copies ${copies == 1 ? 'copia' : 'copias'}'),
               ],
             ),
             const SizedBox(width: 16),
             Expanded(
               child: FilledButton.icon(
-                onPressed: () {},
+                // read: solo ejecuta una acción, no necesita observar.
+                onPressed: canAdd
+                    ? () => context.read<ActiveDeckProvider>().add(card)
+                    : null,
                 icon: const Icon(Icons.add),
-                label: const Text('Agregar al mazo activo'),
+                label: Text(
+                  canAdd ? 'Agregar al mazo activo' : 'Límite alcanzado',
+                ),
               ),
             ),
           ],
