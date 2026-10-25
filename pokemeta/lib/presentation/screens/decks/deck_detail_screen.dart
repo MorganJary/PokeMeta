@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:pokemeta/models/deck_model.dart';
 import 'package:pokemeta/presentation/screens/cards/card_detail_screen.dart';
+import 'package:pokemeta/presentation/screens/decks/active_deck_screen.dart';
 import 'package:pokemeta/presentation/screens/decks/deck_form_screen.dart';
+import 'package:pokemeta/providers/active_deck_provider.dart';
+import 'package:pokemeta/providers/decks_provider.dart';
 import 'package:pokemeta/widgets/card_image.dart';
 import 'package:pokemeta/widgets/stat_badge_widget.dart';
+import 'package:provider/provider.dart';
 
-/// Detalle de un mazo. Ahora es StatefulWidget porque el mazo mostrado
-/// puede cambiar al editarlo desde esta misma pantalla.
+/// Detalle de un mazo guardado. Guarda el mazo mostrado en `_deck`
+/// porque puede cambiar al editarlo desde esta pantalla.
 class DeckDetailScreen extends StatefulWidget {
-  const DeckDetailScreen({super.key, required this.deck, this.onUpdated});
+  const DeckDetailScreen({super.key, required this.deck});
 
   final DeckModel deck;
-
-  /// Aviso opcional hacia quien abrió esta pantalla (la lista de mazos),
-  /// para que también refleje el mazo editado.
-  final ValueChanged<DeckModel>? onUpdated;
 
   @override
   State<DeckDetailScreen> createState() => _DeckDetailScreenState();
@@ -29,21 +29,62 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     _deck = widget.deck;
   }
 
-  Future<void> _edit() async {
+  /// Edita nombre, formato y descripción con el formulario.
+  Future<void> _editData() async {
+    final decks = context.read<DecksProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
     final result = await Navigator.of(context).push<DeckModel>(
       MaterialPageRoute<DeckModel>(
         builder: (context) => DeckFormScreen(deck: _deck),
       ),
     );
-
     if (result == null || !mounted) return;
 
+    decks.replace(_deck, result);
     setState(() => _deck = result);
-    widget.onUpdated?.call(result);
+    messenger.showSnackBar(const SnackBar(content: Text('Mazo actualizado')));
+  }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Mazo actualizado')));
+  /// Carga este mazo como borrador y abre el editor de cartas.
+  Future<void> _editCards() async {
+    final active = context.read<ActiveDeckProvider>();
+    final navigator = Navigator.of(context);
+
+    // Si hay otro borrador sin guardar, se pide confirmación.
+    if (active.hasDraft && active.source != _deck) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Reemplazar borrador'),
+          content: const Text(
+            'Tienes un mazo en construcción sin guardar. '
+            'Si continúas, se descartará.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Continuar'),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true) return;
+    }
+
+    if (active.source != _deck) active.startEditing(_deck);
+
+    final saved = await navigator.push<DeckModel>(
+      MaterialPageRoute<DeckModel>(
+        builder: (context) => const ActiveDeckScreen(),
+      ),
+    );
+    if (saved == null || !mounted) return;
+    setState(() => _deck = saved);
   }
 
   @override
@@ -59,9 +100,9 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
         title: Text(deck.name),
         actions: [
           IconButton(
-            onPressed: _edit,
+            onPressed: _editData,
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Editar mazo',
+            tooltip: 'Editar datos del mazo',
           ),
         ],
       ),
@@ -74,13 +115,21 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
             Text(deck.description),
           ],
           const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: _edit,
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Editar mazo'),
-            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _editData,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Editar datos'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: _editCards,
+                icon: const Icon(Icons.style_outlined),
+                label: const Text('Editar cartas'),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Text(
@@ -109,7 +158,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               child: ListTile(
                 leading: Icon(Icons.inbox_outlined),
                 title: Text('Este mazo aún no tiene cartas'),
-                subtitle: Text('Cuando agregues cartas, aparecerán aquí.'),
+                subtitle: Text('Usa "Editar cartas" para agregarlas.'),
               ),
             )
           else
