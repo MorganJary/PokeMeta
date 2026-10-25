@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:pokemeta/models/card_model.dart';
+import 'package:pokemeta/models/tournament_model.dart';
 import 'package:pokemeta/presentation/screens/cards/card_detail_screen.dart';
+import 'package:pokemeta/presentation/screens/tournaments/tournament_detail_screen.dart';
+import 'package:pokemeta/widgets/active_deck_banner.dart';
+import 'package:pokemeta/widgets/pokemon_card_tile.dart';
+import 'package:pokemeta/widgets/tournament_row_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,14 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 24),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.style_outlined),
-            title: const Text('Constructor de mazo activo'),
-            subtitle: const Text('42 de 60 cartas'),
-            trailing: const CircularProgressIndicator(value: 0.7),
-          ),
-        ),
+        const ActiveDeckBanner(currentCount: 42, maxCount: 60),
         const SizedBox(height: 16),
         SegmentedButton<int>(
           segments: const [
@@ -67,27 +65,20 @@ class _HomeScreenState extends State<HomeScreen> {
               TextButton(onPressed: () {}, child: const Text('Ver todos')),
             ],
           ),
-          const _ResultTile(
-            number: '01',
-            name: 'Victory Road Cup',
-            details: 'Toronto · 18 de abril',
-            deck: 'Charizard ex',
-            players: '128 jugadores',
-          ),
-          const _ResultTile(
-            number: '02',
-            name: 'Neon City League',
-            details: 'Nueva York · 12 de abril',
-            deck: 'Lost Zone Box',
-            players: '96 jugadores',
-          ),
-          const _ResultTile(
-            number: '03',
-            name: 'Regional Qualifier',
-            details: 'Seattle · 5 de abril',
-            deck: 'Gardevoir ex',
-            players: '214 jugadores',
-          ),
+          for (var i = 0; i < sampleTournaments.length; i++)
+            TournamentRowCard(
+              number: '${i + 1}'.padLeft(2, '0'),
+              tournament: sampleTournaments[i],
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => TournamentDetailScreen(
+                      tournament: sampleTournaments[i],
+                    ),
+                  ),
+                );
+              },
+            ),
         ] else ...[
           Text('Base de cartas', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
@@ -118,73 +109,20 @@ class _HomeScreenState extends State<HomeScreen> {
             childAspectRatio: 0.78,
             children: [
               for (final card in sampleCards)
-                Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (context) => CardDetailScreen(card: card),
-                        ),
-                      );
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Expanded(
-                          child: Icon(Icons.image_outlined, size: 48),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                card.name,
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                              Text(card.expansion),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                PokemonCardTile(
+                  card: card,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => CardDetailScreen(card: card),
+                      ),
+                    );
+                  },
                 ),
             ],
           ),
         ],
       ],
-    );
-  }
-}
-
-class _ResultTile extends StatelessWidget {
-  const _ResultTile({
-    required this.number,
-    required this.name,
-    required this.details,
-    required this.deck,
-    required this.players,
-  });
-
-  final String number;
-  final String name;
-  final String details;
-  final String deck;
-  final String players;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Text(number),
-        title: Text(name),
-        subtitle: Text('$details\n$deck'),
-        isThreeLine: true,
-        trailing: Text(players),
-        onTap: () {},
-      ),
     );
   }
 }

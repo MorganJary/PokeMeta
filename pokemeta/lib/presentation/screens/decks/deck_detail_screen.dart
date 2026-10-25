@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pokemeta/models/deck_model.dart';
+import 'package:pokemeta/presentation/screens/cards/card_detail_screen.dart';
+import 'package:pokemeta/widgets/card_image.dart';
+import 'package:pokemeta/widgets/stat_badge_widget.dart';
 
 class DeckDetailScreen extends StatelessWidget {
   const DeckDetailScreen({super.key, required this.deck});
@@ -31,9 +34,9 @@ class DeckDetailScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _DeckStat(value: '${deck.cardCount}', label: 'Cartas'),
-                  _DeckStat(value: '$pokemonCount', label: 'Pokémon'),
-                  _DeckStat(value: '$typeCount', label: 'Tipos'),
+                  StatBadgeWidget(value: '${deck.cardCount}', label: 'Cartas'),
+                  StatBadgeWidget(value: '$pokemonCount', label: 'Pokémon'),
+                  StatBadgeWidget(value: '$typeCount', label: 'Tipos'),
                 ],
               ),
             ),
@@ -44,31 +47,28 @@ class DeckDetailScreen extends StatelessWidget {
           for (final entry in deck.cards)
             Card(
               child: ListTile(
-                leading: const Icon(Icons.image_outlined),
+                leading: SizedBox(
+                  width: 40,
+                  height: 56,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: CardImage(card: entry.card, iconSize: 24),
+                  ),
+                ),
                 title: Text(entry.card.name),
                 subtitle: Text('${entry.card.type} · ${entry.card.expansion}'),
                 trailing: Text('×${entry.count}'),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => CardDetailScreen(card: entry.card),
+                    ),
+                  );
+                },
               ),
             ),
         ],
       ),
-    );
-  }
-}
-
-class _DeckStat extends StatelessWidget {
-  const _DeckStat({required this.value, required this.label});
-
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value, style: Theme.of(context).textTheme.titleLarge),
-        Text(label, style: Theme.of(context).textTheme.labelSmall),
-      ],
     );
   }
 }
