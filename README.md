@@ -18,7 +18,7 @@ Este repositorio ha sido estructurado para cumplir con los 9 criterios de evalua
    * **Animación Implícita:** Uso de `AnimatedScale` y `AnimatedContainer` para dar *feedback* visual interactivo al marcar cartas favoritas (y, más adelante, al agregarlas al mazo).
 5. **Tabla en Supabase con RLS (CRUD):** Almacenamiento de los mazos de cada jugador en PostgreSQL (Supabase) con políticas de *Row Level Security* (RLS) activas para que cada usuario solo pueda crear, leer, actualizar y eliminar sus propios registros
 6. **Formulario con validación:** Implementación de `Form` y `TextFormField` con reglas de validación (`validator`) para la creación y edición de mazos (nombre de 3 a 30 caracteres, formato de juego obligatorio y descripción de 10 a 200 caracteres)
-7. **Estado Global con Provider:** Uso de `ChangeNotifier` (`ActiveDeckProvider`) compartido entre múltiples pantallas para gestionar en tiempo real el contador y listado de cartas del mazo en construcción
+7. **Estado Global con Provider:** Uso de `ChangeNotifier` (`ActiveDeckProvider`) compartido entre múltiples pantallas para gestionar en tiempo real el contador y listado de cartas del mazo en construcción, y `DecksProvider` para la lista de mazos guardados
 8. **Widgets propios reutilizables:** Componentes modulares extraídos en sus propios archivos dentro de `lib/widgets/` (`PokemonCardTile`, `CardImage`, `StatBadgeWidget`, `CustomStatRow`, `TournamentRowCard`, `ActiveDeckBanner`)
 9. **Flujo colaborativo en GitHub:** Historial de commits distribuido entre todos los integrantes del equipo según sus roles asignados.
 
@@ -34,7 +34,7 @@ Este repositorio ha sido estructurado para cumplir con los 9 criterios de evalua
 | 4 | Animaciones (`Hero` e implícitas) | Implementado |
 | 5 | Tabla en Supabase con RLS (CRUD) | Pendiente |
 | 6 | Formulario con validación | Implementado (falta conectar la persistencia) |
-| 7 | Estado global con Provider | Pendiente |
+| 7 | Estado global con Provider | Implementado (en memoria) |
 | 8 | Widgets propios reutilizables | Implementado |
 | 9 | Flujo colaborativo en GitHub | En curso |
 
@@ -46,7 +46,7 @@ El detalle del reparto de trabajo, los contratos de los modelos y los puntos de 
 
 * **Framework:** Flutter & Dart
 * **Backend & Auth:** [Supabase](https://supabase.com/) (`supabase_flutter`) — *pendiente de agregar a `pubspec.yaml`*
-* **Gestión de Estado:** `provider` (`ChangeNotifier`) — *pendiente de agregar a `pubspec.yaml`*
+* **Gestión de Estado:** `provider` (`ChangeNotifier`)
 * **Cliente HTTP:** `http` — *pendiente de agregar a `pubspec.yaml`*
 * **APIs Externas:**
   * [Limitless TCG API](https://docs.limitlesstcg.com/) / [TopDeck.gg API](https://topdeck.gg/docs/tournaments-v2) — Datos de torneos competitivos, *standings* y *decklists*.
@@ -60,12 +60,12 @@ El proyecto Flutter está en la carpeta `pokemeta/`.
 
 ```text
 pokemeta/lib/
-├── main.dart                        # Punto de entrada (pendiente: inicializar Supabase y MultiProvider)
+├── main.dart                        # Punto de entrada con MultiProvider (pendiente: inicializar Supabase)
 ├── models/                          # Modelos de datos
 │   ├── card_model.dart              #   CardModel + datos de ejemplo
 │   ├── deck_model.dart              #   DeckModel, DeckCardEntry + datos de ejemplo
 │   └── tournament_model.dart        #   TournamentModel + datos de ejemplo
-├── providers/                       # (pendiente) ChangeNotifiers: ActiveDeckProvider
+├── providers/                       # ChangeNotifiers: ActiveDeckProvider (borrador) y DecksProvider (mazos guardados)
 ├── services/                        # (pendiente) Consumo de API REST y cliente de Supabase
 ├── widgets/                         # Widgets propios reutilizables, un archivo por widget
 │   ├── active_deck_banner.dart
@@ -80,6 +80,8 @@ pokemeta/lib/
     ├── home/home_screen.dart                    # Explorador de torneos y cartas
     ├── cards/card_detail_screen.dart            # Detalle de carta (Hero + animación implícita)
     ├── decks/
+    │   ├── active_deck_screen.dart              # Editor del mazo en construcción (Provider)
+    │   ├── card_picker_screen.dart              # Selector de cartas para agregar al mazo
     │   ├── decks_screen.dart                    # Lista de mazos
     │   ├── deck_detail_screen.dart              # Detalle de mazo, con edición
     │   └── deck_form_screen.dart                # Formulario validado de mazos
